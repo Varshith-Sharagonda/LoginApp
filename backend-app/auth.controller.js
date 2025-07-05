@@ -79,17 +79,28 @@ export const verifyEmail = async (req, res) => {
 
 export const login = async (req, res) => {
   try {
-    const { username, password } = req.body;
-    console.log(
-      `Login attempt with username: ${username}, password: ${password}`
-    );
-    if (username === "admin" && password === "password") {
-      res.status(200).send({ message: "Login successful" });
-    } else {
-      res.status(401).send({ message: "Invalid credentials" });
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).send({ message: "email and password are required" });
     }
+    const user = await User.findOne({ email }); 
+    if (!user) {
+      return res.status(404).send({ message: "User not found" });
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).send({ message: "Invalid password" });
+    }
+    createTokenAndSetCookie(res, user);
+    user.lastLogin = new Date(); // Update last login time
+    await user.save(); // Save the updated user document
+    res.status(200).send({
+      message: "Login successful",
+      user: { ...user._doc, password: undefined }, 
+    });
   } catch (error) {
-    res.status(500).send({ message: "Internal server error" });
+    res.status(500).send({ message: `Error during login: ${error.message}` });
   }
 };
 
