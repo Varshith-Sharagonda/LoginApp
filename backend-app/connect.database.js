@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
 export const connectDatabase = async () => {
   try {
@@ -8,4 +8,4 @@ export const connectDatabase = async () => {
     console.error(`Error connecting to MongoDB: ${error.message}`);
     process.exit(1); // Exit the process with failure
   }
-}
+};

@@ -1,6 +1,6 @@
-import Nodemailer from "nodemailer";
-import { MailtrapTransport } from "mailtrap";
-import dotenv from "dotenv";
+import Nodemailer from 'nodemailer';
+import { MailtrapTransport } from 'mailtrap';
+import dotenv from 'dotenv';
 
 dotenv.config();
 const TOKEN = process.env.MAILTRAP_TOKEN;
@@ -13,10 +13,10 @@ transport = Nodemailer.createTransport(
 );
 
 export const sender = {
-  address: "hello@demomailtrap.co",
-  name: "Varshith",
+  address: 'hello@demomailtrap.co',
+  name: 'Varshith',
 };
 
 export const recipients = [
-  "varshith.rede96@gmail.com",
+  'varshith.rede96@gmail.com',
 ];
