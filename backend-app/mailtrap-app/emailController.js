@@ -1,6 +1,7 @@
 import { sender, recipients, transport } from "./config.js";
-import { VERIFICATION_EMAIL_TEMPLATE } from "./emailTemplates.js";
-
+import { VERIFICATION_EMAIL_TEMPLATE, PASSWORD_RESET_REQUEST_TEMPLATE, PASSWORD_RESET_SUCCESS_TEMPLATE } from "./emailTemplates.js";
+import dotenv from "dotenv";
+dotenv.config();
 export const sendVerificationEmail = async (email, verificationCode) => {
   try {
     const mailOptions = {
@@ -39,3 +40,40 @@ export const sendWelcomeEmail = async (user) => {
     console.error(`Error sending welcome email: ${error.message}`);
   }
 };
+
+export const sendPasswordResetEmail = async (email, resetToken) => {
+  try {
+    const mailOptions = {
+      from: sender,
+      to: email,
+      subject: "Password Reset Request",
+      html: PASSWORD_RESET_REQUEST_TEMPLATE.replace(
+        "{resetURL}",
+        `${process.env.RESET_PASSWORD_URL}/reset-password?token=${resetToken}`
+      ),
+      category: "Password Reset",
+    };
+
+    await transport.sendMail(mailOptions);
+    console.log(`Password reset email sent to ${email}`);
+  } catch (error) {
+    console.error(`Error sending password reset email: ${error.message}`);
+  }
+};
+
+export const sendPasswordResetSuccessEmail = async (email) => {
+  try {
+    const mailOptions = {
+      from: sender,
+      to: email,
+      subject: "Password Reset Successful",
+      html: PASSWORD_RESET_SUCCESS_TEMPLATE,
+      category: "Password Reset",
+    };
+
+    await transport.sendMail(mailOptions);
+    console.log(`Password reset success email sent to ${email}`);
+  } catch (error) {
+    console.error(`Error sending password reset success email: ${error.message}`);
+  }
+};  

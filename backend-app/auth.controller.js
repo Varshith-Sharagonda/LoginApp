@@ -1,7 +1,13 @@
 import { User } from "../backend-app/user-model-app/user.model.js";
 import bcrypt from "bcryptjs";
 import { createTokenAndSetCookie } from "../utils-app/token.js";
-import { sendVerificationEmail, sendWelcomeEmail } from "./mailtrap-app/emailController.js";
+import {
+  sendVerificationEmail,
+  sendWelcomeEmail,
+  sendPasswordResetEmail,
+  sendPasswordResetSuccessEmail,
+} from "./mailtrap-app/emailController.js";
+import crypto from "crypto";
 
 export const register = async (req, res) => {
   try {
@@ -32,13 +38,11 @@ export const register = async (req, res) => {
     await newUser.save();
     sendVerificationEmail(email, verificationToken);
     createTokenAndSetCookie(res, newUser);
-    res
-      .status(201)
-      .send({
-        message: "User registered successfully",
-        success: true,
-        user: { ...newUser._doc },
-      });
+    res.status(201).send({
+      message: "User registered successfully",
+      success: true,
+      user: { ...newUser._doc },
+    });
   } catch (error) {
     console.log(`Error during registration: ${error.message}`);
     res
@@ -59,11 +63,16 @@ export const verifyEmail = async (req, res) => {
       return res.status(404).send({ message: "User not found" });
     }
 
-    if (user.verificationToken !== verificationToken || user.verificationTokenExpiresAt < new Date()) {
-      return res.status(400).send({ message: "Invalid or expired verification token" });
+    if (
+      user.verificationToken !== verificationToken ||
+      user.verificationTokenExpiresAt < new Date()
+    ) {
+      return res
+        .status(400)
+        .send({ message: "Invalid or expired verification token" });
     }
     user.isVerified = true;
-    user.verificationToken = undefined; // Clear the verification token after successful verification  
+    user.verificationToken = undefined; // Clear the verification token after successful verification
     user.verificationTokenExpiresAt = undefined; // Clear the expiration date
     await user.save();
     await sendWelcomeEmail(user);
@@ -81,9 +90,11 @@ export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!email || !password) {
-      return res.status(400).send({ message: "email and password are required" });
+      return res
+        .status(400)
+        .send({ message: "email and password are required" });
     }
-    const user = await User.findOne({ email }); 
+    const user = await User.findOne({ email });
     if (!user) {
       return res.status(404).send({ message: "User not found" });
     }
@@ -93,11 +104,11 @@ export const login = async (req, res) => {
       return res.status(401).send({ message: "Invalid password" });
     }
     createTokenAndSetCookie(res, user);
-    user.lastLogin = new Date(); // Update last login time
-    await user.save(); // Save the updated user document
+    user.lastLogin = new Date();
+    await user.save();
     res.status(200).send({
       message: "Login successful",
-      user: { ...user._doc, password: undefined }, 
+      user: { ...user._doc, password: undefined },
     });
   } catch (error) {
     res.status(500).send({ message: `Error during login: ${error.message}` });
@@ -112,3 +123,51 @@ export const logout = async (req, res) => {
     res.status(500).send({ message: "Internal server error" });
   }
 };
+
+export const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).send({ success: false, message: "Email is required" });
+    }
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).send({ success: false, message: "Invalid email. User not found" });
+    }
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    await user.save();
+    await sendPasswordResetEmail(email, resetToken);
+    res.status(200).send({ success: true, message: "Password reset email sent" });
+  } catch (error) {
+    res
+      .status(500)
+      .send({ success: false, message: `Error during password reset: ${error.message}` });
+  }
+};
+
+export const resetPassword = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { password } = req.body;
+    if (!password) {
+      return res.status(400).send({ success: false, message: "New password is required" });
+    }
+    const user = await User.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpiresAt: { $gt: new Date() },
+    });
+    if (!user) {
+      return res.status(404).send({ success: false, message: "Invalid or expired token" });
+    }
+    user.password = await bcrypt.hash(password, 10);
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpiresAt = undefined;
+    await user.save();
+    await sendPasswordResetSuccessEmail(user.email);
+    res.status(200).send({ success: true, message: "Password reset successful" });
+  } catch (error) {
+    res.status(500).send({ success: false, message: `Error resetting password: ${error.message}` });
+  }
+}
