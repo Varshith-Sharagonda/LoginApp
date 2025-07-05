@@ -12,7 +12,6 @@ import crypto from 'crypto';
 export const register = async (req, res) => {
   try {
     const { username, email, password } = req.body;
-    console.log(`Registering user with username: ${username}, email: ${email}`);
     if (!username || !email || !password) {
       return res.status(400).send({ message: 'All fields are required' });
     }
@@ -44,7 +43,6 @@ export const register = async (req, res) => {
       user: { ...newUser._doc },
     });
   } catch (error) {
-    console.log(`Error during registration: ${error.message}`);
     res
       .status(500)
       .send({ message: `Error during registration: ${error.message}` });
@@ -55,9 +53,6 @@ export const verifyEmail = async (req, res) => {
   try {
     const { email, verificationToken } = req.body;
     const user = await User.findOne({ email });
-    console.log(
-      `Verifying email for user: ${user}, token: ${verificationToken}`
-    );
 
     if (!user) {
       return res.status(404).send({ message: 'User not found' });
@@ -76,7 +71,6 @@ export const verifyEmail = async (req, res) => {
     user.verificationTokenExpiresAt = undefined; // Clear the expiration date
     await user.save();
     await sendWelcomeEmail(user);
-    console.log(`Email verified for user: ${email}`);
     res.status(200).send({ message: 'Email verified successfully' });
   } catch (error) {
     console.error(`Error verifying email: ${error.message}`);
@@ -120,7 +114,7 @@ export const logout = async (req, res) => {
     res.clearCookie('token');
     res.status(200).send({ message: 'Logout successful' });
   } catch (error) {
-    res.status(500).send({ message: 'Internal server error' });
+    res.status(500).send({ message: `Error during logout: ${error.message}` });
   }
 };
 

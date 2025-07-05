@@ -56,6 +56,20 @@ LoginApp/
 - Token-based authentication
 - Modular code structure
 
+### Hiding API Keys
+- Store sensitive keys in a `.env` file (never commit this file).
+- Add `.env` to your `.gitignore`.
+- Access keys in your code using `process.env.YOUR_KEY` (Node.js).
+
+### Running ESLint on Push/PR
+- ESLint runs automatically on push and pull request via GitHub Actions (see `.github/workflows/eslint.yml`).
+- To run ESLint locally: `npx eslint . --ext .js,.jsx,.ts,.tsx`
+
+### Recommended CI Jobs After Push
+- **Linting:** Ensures code style and syntax.
+- **Testing:** (Add if you have tests)
+- **Build:** (Add if your app requires a build step)
+
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
