@@ -1,4 +1,4 @@
-import { sender, recipients, transport } from './config.js';
+import { sender, transport } from './config.js';
 import { VERIFICATION_EMAIL_TEMPLATE, PASSWORD_RESET_REQUEST_TEMPLATE, PASSWORD_RESET_SUCCESS_TEMPLATE } from './emailTemplates.js';
 import dotenv from 'dotenv';
 dotenv.config();
@@ -16,7 +16,6 @@ export const sendVerificationEmail = async (email, verificationCode) => {
     };
 
     await transport.sendMail(mailOptions);
-    console.log(`Verification email sent to ${email}`);
   } catch (error) {
     console.error(`Error sending verification email: ${error.message}`);
   }
@@ -34,8 +33,7 @@ export const sendWelcomeEmail = async (user) => {
             <p>The Auth Team</p>`,
     };
 
-    const response = await transport.sendMail(mailOptions);
-    console.log(`Welcome email sent to ${user.email}`);
+    await transport.sendMail(mailOptions);
   } catch (error) {
     console.error(`Error sending welcome email: ${error.message}`);
   }
@@ -55,7 +53,6 @@ export const sendPasswordResetEmail = async (email, resetToken) => {
     };
 
     await transport.sendMail(mailOptions);
-    console.log(`Password reset email sent to ${email}`);
   } catch (error) {
     console.error(`Error sending password reset email: ${error.message}`);
   }
@@ -72,7 +69,6 @@ export const sendPasswordResetSuccessEmail = async (email) => {
     };
 
     await transport.sendMail(mailOptions);
-    console.log(`Password reset success email sent to ${email}`);
   } catch (error) {
     console.error(`Error sending password reset success email: ${error.message}`);
   }
