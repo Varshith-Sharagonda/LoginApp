@@ -1,4 +1,4 @@
-name: Lint Code
+name: es lint
 
 on:
   push:
