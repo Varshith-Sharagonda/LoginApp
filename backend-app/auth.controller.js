@@ -106,7 +106,7 @@ export const login = async (req, res) => {
 
 export const logout = async (req, res) => {
   try {
-    // Simulate logout logic
+    res.clearCookie("token");
     res.status(200).send({ message: "Logout successful" });
   } catch (error) {
     res.status(500).send({ message: "Internal server error" });
