@@ -1,6 +1,6 @@
 import { User } from '../backend-app/user-model-app/user.model.js';
 import bcrypt from 'bcryptjs';
-import { createTokenAndSetCookie } from '../utils-app/token.js';
+import { generateAuthTokenAndSetCookie } from '../utils-app/token.js';
 import {
   sendVerificationEmail,
   sendWelcomeEmail,
@@ -36,7 +36,7 @@ export const register = async (req, res) => {
     });
     await newUser.save();
     sendVerificationEmail(email, verificationToken);
-    createTokenAndSetCookie(res, newUser);
+    generateAuthTokenAndSetCookie(res, newUser);
     res.status(201).send({
       message: 'User registered successfully',
       success: true,
@@ -97,7 +97,7 @@ export const login = async (req, res) => {
     if (!isPasswordValid) {
       return res.status(401).send({ message: 'Invalid password' });
     }
-    createTokenAndSetCookie(res, user);
+    generateAuthTokenAndSetCookie(res, user);
     user.lastLogin = new Date();
     await user.save();
     res.status(200).send({
@@ -163,5 +163,20 @@ export const resetPassword = async (req, res) => {
     res.status(200).send({ success: true, message: 'Password reset successful' });
   } catch (error) {
     res.status(500).send({ success: false, message: `Error resetting password: ${error.message}` });
+  }
+};
+
+export const protectRoute = async (req, res) => {
+  try {
+    if (!req.userId) {
+      return res.status(401).send({ success: false, message: 'Unauthorized access' });
+    }
+    const user = await User.findById(req.userId).select('-password');
+    if (!user) {
+      return res.status(404).send({ success: false, message: 'User not found' });
+    }
+    res.status(200).send({ success: true, message: 'Protected route accessed', user: { ...user._doc } });
+  } catch (error) {
+    res.status(400).send({ success: false, message: `Error protecting route: ${error.message}` });
   }
 };
